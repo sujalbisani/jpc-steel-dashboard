@@ -57,7 +57,7 @@ function steps(route){
  }
  return S}
 function wfSvg(S,aria){
- const W=920,L=265,R=64,rh=27,top=8,n=S.length,H=top+n*rh+26,crude=S[0].v;
+ const W=980,L=305,R=64,rh=27,top=8,n=S.length,H=top+n*rh+26,crude=S[0].v;
  const mx=Math.max(...S.map(s=>Math.max(s.a,s.b)),1),mn=Math.min(0,...S.map(s=>Math.min(s.a,s.b)));
  const x=v=>L+(v-mn)/(mx-mn)*(W-L-R);
  const raw=(mx-mn)/5,e=Math.pow(10,Math.floor(Math.log10(raw))),tk=[1,2,2.5,5,10].map(k=>k*e).find(v=>v>=raw);
@@ -67,7 +67,7 @@ function wfSvg(S,aria){
   const tip=isT?`${r.label}: ${f2(r.v)} Mt · ${pc(r.v,crude)} of crude steel`:`${r.label}: ${sg(r.v)} Mt · ${pc(Math.abs(r.v),Math.abs(r.a))} of the level before · ${pc(Math.abs(r.v),crude)} of crude steel`;
   let j=i-1;while(j>=0&&S[j].part)j--;
   if(j>=0&&!r.part){const pv=S[j];s+=`<line x1="${x(pv.b)}" x2="${x(pv.b)}" y1="${top+j*rh+4+h}" y2="${y}" stroke="var(--ink3)" stroke-dasharray="2 2"/>`}
-  s+=`<g data-tip="${tip}"><rect x="0" y="${y-4}" width="${W}" height="${rh}" fill="transparent"/>`
+  s+=`<g data-tip="${tip}"><rect class="hov" x="0" y="${y-4}" width="${W}" height="${rh}" rx="4" fill="transparent"/>`
    +`<text x="${L-8}" y="${y+h/2+4}" text-anchor="end" ${isT?'class="v"':''}>${isT||r.part?'':'↳ '}${r.label}</text>`
    +`<rect x="${x1}" y="${y}" width="${w}" height="${h}" rx="3" fill="var(${COL[r.cls]})" ${r.bal?'fill-opacity=".75"':r.part?'fill-opacity=".45"':''}/>`
    +`<text class="v" x="${x(Math.max(r.a,r.b))+6}" y="${y+h/2+4}">${isT?f2(r.v):sg(r.v)}</text></g>`});
@@ -80,20 +80,21 @@ function flowView(){
  const e=st.fent,p=st.fper,V=F.v[e][p],g=k=>V[k]||0,pub=e==='All India'?F.pub[p]:null,cr=g('crude');
  const hf=pub&&pub.hrfeed!=null?pub.hrfeed:g('hrs')+g('hsm')+g('pipes')+g('cr'),cf=pub&&pub.crfeed!=null?pub.crfeed:g('gpgc')+g('elec')+g('tin')+g('tfs')+g('tmbp'),gf=pub&&pub.gpfeed!=null?pub.gpfeed:g('cc');
  const est=pub?'':' (est.)';
- const kp=[['Crude steel → HR coil',kr(g('hr'),cr),`${f2(g('hr'))} of ${f2(cr)} Mt`],['HR fed to downstream'+est,kr(hf,g('hr')),`${f2(hf)} of ${f2(g('hr'))} Mt HR coil`],['CR fed to downstream'+est,kr(cf,g('cr')),`${f2(cf)} of ${f2(g('cr'))} Mt CR`],['GP/GC painted into PPGI/PPGL'+est,kr(gf,g('gpgc')),`${f2(gf)} of ${f2(g('gpgc'))} Mt GP/GC`]];
+ const rt=(a,b)=>b>0?Math.min(a/b,1)*100:0;
+ const kp=[['Crude steel → HR coil',pc(g('hr'),cr),`${f2(g('hr'))} of ${f2(cr)} Mt`,rt(g('hr'),cr)],['HR fed to downstream'+est,kr(hf,g('hr')),`${f2(hf)} of ${f2(g('hr'))} Mt HR coil`,rt(hf,g('hr'))],['CR fed to downstream'+est,kr(cf,g('cr')),`${f2(cf)} of ${f2(g('cr'))} Mt CR`,rt(cf,g('cr'))],['GP/GC painted into PPGI/PPGL'+est,kr(gf,g('gpgc')),`${f2(gf)} of ${f2(g('gpgc'))} Mt GP/GC`,rt(gf,g('gpgc'))]];
  const per=(ids,list)=>seg(ids,list.map(k=>[k,PERL[k]]),st.fper);
  const opts=F.entities.map(n=>`<option${n===e?' selected':''}>${n}</option>`).join('');
- const lg=Object.keys(CLS).map(k=>`<span><i style="background:var(${COL[k]})"></i>${CLS[k]}</span>`).join('');
  const SF=steps('flat'),SL=steps('long');
+ const lgf=S=>Object.keys(CLS).filter(k=>S.some(r=>r.cls===k)).map(k=>`<span><i style="background:var(${COL[k]})"></i>${CLS[k]}</span>`).join('');
  return `<h2 style="font:600 22px var(--fc);margin:0 0 4px">Steel flow – from crude steel to downstream</h2>
  <p class="note" style="margin-bottom:10px">Where the steel goes, stage by stage, in million tonnes. ${e} · ${PERL[p]}${F.periods.find(q=>q[0]===p)[2]==='cum'?' (April to date)':' (single month)'}</p>
- <div class="bar"><label class="lab">Period</label>${per('fpa',['c8','c7','c6','c5'])}${per('fpb',['m8','m7','m6'])}<label class="lab" style="margin-left:8px" for="fe">Producer</label><select id="fe">${opts}</select></div>
- <div class="kpis">${kp.map(k=>`<div class="kpi"><span>${k[0]}</span><b>${k[1]}</b><span>${k[2]}</span></div>`).join('')}</div>
+ <div class="bar ctl"><label class="lab">Period</label>${per('fpa',['c8','c7','c6','c5'])}${per('fpb',['m8','m7','m6'])}<label class="lab" style="margin-left:8px" for="fe">Producer</label><select id="fe">${opts}</select></div>
+ <div class="kpis">${kp.map(k=>`<div class="kpi"><span>${k[0]}</span><b>${k[1]}</b><div class="meter"><i style="width:${k[3]}%"></i></div><span>${k[2]}</span></div>`).join('')}</div>
  <div class="panel"><h2>Flat products waterfall</h2><p class="note">Crude steel down to HR coil, then each downstream stage. Blue bars are what each stage produced, teal is what moved on to the next stage, the rest are exits.</p>
-  <div class="leg">${lg}</div><div class="scroll">${wfSvg(SF,'Waterfall of flat steel from crude steel to colour coated')}</div>${wfTable(SF)}</div>
+  <div class="leg">${lgf(SF)}</div><div class="scroll">${wfSvg(SF,'Waterfall of flat steel from crude steel to colour coated')}</div>${wfTable(SF)}</div>
  <div class="panel"><h2>Long products waterfall</h2><p class="note">Crude steel down to rebars. Angles and structurals, rails, wire rods and the rest are grouped as long products.</p>
-  <div class="leg">${lg}</div><div class="scroll">${wfSvg(SL,'Waterfall of long steel from crude steel to rebars')}</div>${wfTable(SL)}</div>
- <div class="panel"><details style="margin:0"><summary style="font:600 16px var(--fc);color:var(--ink)">How to read this</summary><ul class="notes" style="margin-top:10px">
+  <div class="leg">${lgf(SL)}</div><div class="scroll">${wfSvg(SL,'Waterfall of long steel from crude steel to rebars')}</div>${wfTable(SL)}</div>
+ <details class="mini"><summary>How to read this</summary><ul class="notes">
   <li><b>All India:</b> “HR / CR / GP-GC fed to downstream” are JPC’s own <i>consumed for downstream</i> figures (Chapter 5). For a single producer JPC publishes no such number, so it is estimated as the output of the next stage taken 1:1 (no yield loss).</li>
   <li><b>“&gt;100%”</b> in a box above means the producer processes more than it makes at the stage before, so it buys coil.</li>
   <li><b>Balancing bars</b> (red or green) make each stage tie to the reported production. Red is yield loss, stock build or unaccounted material. Green is material that came from outside the chain, such as imports, bought-in coil or stock draw. A producer with more downstream output than HR coil (for example JSL and “The remaining producers”) shows a large green bar: it buys coil.</li>
@@ -101,4 +102,4 @@ function flowView(){
   <li><b>Imports and exports</b> (All India only) come from the JPC Trade Reports for HR coil, CR, GP/GC/BGL and colour coated. The “sold domestically / stock” bar is what is left after production, trade and the downstream feed. JPC publishes no producer-wise trade, so the producer view has no import/export bars. Trade in long products is on the product pages, not in the waterfall.</li>
   <li><b>Colour coated:</b> JPC’s GP/GC-consumed-for-downstream equals colour-coated output exactly, so that step has no loss.</li>
   <li><b>Alloy and stainless flat</b> come out before HR coil because JPC’s HR coil line is non-alloy only; their own downstream is not tracked here.</li>
-  <li><b>Periods:</b> April-only and May-only figures are not available because JPC prints the April category tables as images. Single months are the difference between consecutive April-to-date reports, so JPC’s later revisions are already included.</li></ul></details></div>`}
+  <li><b>Periods:</b> April-only and May-only figures are not available because JPC prints the April category tables as images. Single months are the difference between consecutive April-to-date reports, so JPC’s later revisions are already included.</li></ul></details>`}
