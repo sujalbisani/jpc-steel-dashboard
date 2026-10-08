@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JPC Steel Dashboard</title>
+<style>
+html{color-scheme:light}
+/* Layout: sticky product rail on the left, one working panel on the right; overview first, product drill-down on click */
+:root{--bg:#f3f5f7;--panel:#fff;--ink:#16202b;--ink2:#52606d;--ink3:#8593a1;--line:#dde3e9;--imp:#2b6cb0;--exp:#d9822b;--good:#2f855a;--bad:#c53030;--sel:#e6eef7;--grid:#e8edf1;--sub:#2c7a7b;
+--f:'Segoe UI',system-ui,sans-serif;--fc:'Segoe UI Semibold','Segoe UI',system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f161d;--panel:#18222c;--ink:#e6ecf2;--ink2:#a5b2bf;--ink3:#74828f;--line:#2a3743;--imp:#63a4e6;--exp:#f0a050;--good:#5fc48e;--bad:#f27b7b;--sel:#22364a;--grid:#243039;--sub:#4fb3b3;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f161d;--panel:#18222c;--ink:#e6ecf2;--ink2:#a5b2bf;--ink3:#74828f;--line:#2a3743;--imp:#63a4e6;--exp:#f0a050;--good:#5fc48e;--bad:#f27b7b;--sel:#22364a;--grid:#243039;--sub:#4fb3b3;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;padding-inline:16px;padding-block:16px 40px}
+.wrap{max-width:1280px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+h1{font:600 24px var(--fc);margin:0;letter-spacing:.2px}
+.sub{color:var(--ink2);font-size:12.5px}
+.grid{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+nav{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}
+@media(max-width:820px){nav{position:static;max-height:none;display:flex;flex-wrap:wrap;gap:6px}nav h3{width:100%}}
+nav h3{font:600 11px var(--f);text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin:10px 6px 4px}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);font:inherit;padding:7px 8px;border-radius:4px;cursor:pointer}
+nav button:hover{background:var(--sel)}nav button[aria-current="true"]{background:var(--sel);font-weight:600;box-shadow:inset 3px 0 0 var(--imp)}
+@media(max-width:820px){nav button{width:auto;border:1px solid var(--line)}}
+button:focus-visible{outline:2px solid var(--imp);outline-offset:1px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;min-width:0}
+.panel+.panel{margin-top:16px}
+.panel h2{font:600 16px var(--fc);margin:0 0 2px;letter-spacing:.2px}
+.note{color:var(--ink2);font-size:12px;margin:0 0 12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{background:none;border:0;border-right:1px solid var(--line);padding:5px 11px;font:inherit;color:var(--ink2);cursor:pointer}
+.seg button:last-child{border-right:0}.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px}
+.kpi b{display:block;font:600 24px var(--fc);font-variant-numeric:tabular-nums}.kpi span{font-size:12px;color:var(--ink2)}
+.kpi i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px}
+.two>.panel{margin:0}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}th{font:600 11px var(--f);text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+tr.pr{cursor:pointer}tr.pr:hover td{background:var(--sel)}tr.grp td{font:600 11px var(--f);text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);background:var(--bg)}
+td.tot{font-weight:600}.scroll{overflow-x:auto}
+.row{display:grid;grid-template-columns:minmax(90px,150px) minmax(0,1fr) 56px;gap:8px;align-items:center;padding:3px 0}
+.row .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.row .t{height:14px;background:var(--grid);border-radius:2px}.row .f{height:100%;border-radius:2px 4px 4px 2px}
+.row .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.ov{display:grid;grid-template-columns:minmax(100px,170px) minmax(0,1fr);gap:8px;align-items:center;padding:4px 0;cursor:pointer}
+.ov:hover{background:var(--sel)}.ov .b{display:flex;flex-direction:column;gap:2px}.ov .b div{height:8px;border-radius:0 3px 3px 0;min-width:1px}
+.leg{display:flex;gap:14px;font-size:12px;color:var(--ink2);margin-bottom:8px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+svg text{fill:var(--ink2);font:11px var(--f)}svg text.v{fill:var(--ink);font-weight:500}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:5px 8px;border-radius:4px;font-size:12px;z-index:9;display:none;white-space:nowrap}
+.warn{font-size:12px;color:var(--ink2);border-left:3px solid var(--exp);padding:2px 10px;margin-top:12px}
+.up{color:var(--good)}.dn{color:var(--bad)}
+h3.sec{font:600 12px var(--f);margin:10px 0 4px;color:var(--ink2)}
+.lab{font-size:12px;color:var(--ink2)}
+select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;font:inherit}
+.frow{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+@media(max-width:700px){.frow{grid-template-columns:minmax(0,1fr)}}
+.fl{font:600 11px var(--f);text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.arr{color:var(--ink3)}
+.chip{border:1px solid var(--line);border-radius:6px;padding:6px 10px;min-width:96px;background:var(--bg)}
+.chip span{display:block;font-size:11.5px;color:var(--ink2)}.chip b{font:600 17px var(--fc);font-variant-numeric:tabular-nums}.chip i{font-style:normal;font-size:11.5px;color:var(--ink3);margin-left:6px}
+.chip.mini{min-width:0;padding:4px 8px}.chip.mini b{font-size:14px}.grp4{display:flex;flex-wrap:wrap;gap:6px;padding:6px;border:1px dashed var(--line);border-radius:8px}
+.notes{margin:0;padding-left:18px;color:var(--ink2);font-size:12.5px;line-height:1.5}.notes li+li{margin-top:6px}
+details{margin-top:8px}summary{cursor:pointer;color:var(--ink2);font-size:12.5px}
+</style>
+</head>
+<body>
+<noscript><p style="padding:16px">JavaScript is turned off or blocked in this browser. Enable it for this file, or open the file in Edge.</p></noscript>
+<div id="err" style="display:none;margin:0 0 12px;padding:10px 14px;border:1px solid #c53030;border-radius:6px;color:#c53030;font:13px monospace;white-space:pre-wrap"></div>
+<script>window.addEventListener("error",function(e){var b=document.getElementById("err");if(b){b.style.display="block";b.textContent="Script error: "+e.message+" (line "+e.lineno+")"}});</script>
+<div class="wrap">
+<header><div><h1>JPC Steel Trade &amp; Production Dashboard</h1><div class="sub">India · FY 2026-27 · Apr–Aug 2026 (provisional) · '000 tonnes · Source: JPC Trade &amp; Monthly Reports</div></div></header>
+<div class="grid"><nav id="nav" aria-label="Products"></nav><main id="main"></main></div>
+</div>
+<div id="tip"></div>
+<script>
+const D=__DATA__;
+const M=D.months,P=D.products,$=s=>document.querySelector(s);
+const st={sel:'flow',fper:'c8',fent:'All India',ov:'import',cflow:'import',cper:5,pper:'cum'};
+const f1=n=>n==null?'–':n.toLocaleString('en-IN',{maximumFractionDigits:1,minimumFractionDigits:Math.abs(n)<10&&n!==0?1:0});
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const tip=$('#tip');
+document.addEventListener('mousemove',e=>{const t=e.target.closest('[data-tip]');if(!t){tip.style.display='none';return}
+ tip.textContent=t.dataset.tip;tip.style.display='block';tip.style.left=Math.min(e.clientX+12,innerWidth-200)+'px';tip.style.top=(e.clientY+14)+'px'});
+const GN={Flat:'Flat products',Coated:'Coated (GP / GC / PPGL)',Long:'Long &amp; semis'};
+function nav(){let h='<button data-p="flow" aria-current="'+(st.sel==='flow')+'">Steel flow – waterfall</button><button data-p="" aria-current="'+(st.sel===null)+'">Overview – all products</button>';
+ for(const g of ['Flat','Coated','Long']){h+='<h3>'+GN[g]+'</h3>';
+  P.forEach((p,i)=>{if(p.group===g)h+=`<button data-p="${i}" aria-current="${st.sel===i}">${p.name}</button>`})}
+ $('#nav').innerHTML=h;$('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>go(b.dataset.p===''?null:b.dataset.p==='flow'?'flow':+b.dataset.p))}
+function go(i){st.sel=i;st.cper=5;render();scrollTo(0,0)}
+function seg(id,opts,cur){return `<div class="seg" id="${id}">`+opts.map(([k,l])=>`<button data-k="${k}" aria-pressed="${String(cur)===String(k)}">${l}</button>`).join('')+'</div>'}
+function wire(id,fn){document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{fn(b.dataset.k);render()})}
+function overview(){
+ const fl=st.ov;let rows='';
+ for(const g of ['Flat','Coated','Long']){rows+=`<tr class="grp"><td colspan="7">${GN[g]}</td></tr>`;
+  P.forEach((p,i)=>{if(p.group!==g)return;rows+=`<tr class="pr" data-p="${i}"><td>${p.name}</td>`+p[fl].map(v=>`<td>${f1(v)}</td>`).join('')+`<td class="tot">${f1(sum(p[fl]))}</td></tr>`})}
+ const mx=Math.max(...P.map(p=>Math.max(sum(p.import),sum(p.export))));
+ const bars=P.map((p,i)=>[p,i]).sort((a,b)=>Math.max(sum(b[0].import),sum(b[0].export))-Math.max(sum(a[0].import),sum(a[0].export))).map(([p,i])=>{const I=sum(p.import),E=sum(p.export);
+  return `<div class="ov" data-p="${i}"><span>${p.name}</span><div class="b"><div data-tip="${p.name} imports: ${f1(I)}" style="width:${I/mx*92}%;background:var(--imp)"></div><div data-tip="${p.name} exports: ${f1(E)}" style="width:${E/mx*92}%;background:var(--exp)"></div></div></div>`}).join('');
+ return `<div class="panel"><h2>Import vs export, product wise</h2><p class="note">Apr–Aug 2026 cumulative, '000 t. Click a product to open it.</p>
+ <div class="leg"><span><i style="background:var(--imp)"></i>Import</span><span><i style="background:var(--exp)"></i>Export</span></div>${bars}</div>
+ <div class="panel"><h2>Month-wise by product</h2><p class="note">Quantity in '000 tonnes.</p><div class="bar">${seg('ovs',[['import','Imports'],['export','Exports']],fl)}</div>
+ <div class="scroll"><table><thead><tr><th>Product</th>${M.map(m=>`<th>${m}</th>`).join('')}<th>Apr–Aug</th></tr></thead><tbody>${rows}</tbody></table></div>
+ <p class="warn">GP/GC includes galvalume (BGL); PPGL/PPGI is the colour-coated line. JPC does not report TMT separately, so Bars &amp; Rods stands in for it.</p></div>`}
+function colChart(p){const W=640,H=230,l=44,b=26,t=16,n=M.length;const mx=Math.max(...p.import,...p.export,1);
+ const nice=(()=>{const e=Math.pow(10,Math.floor(Math.log10(mx)));return [1,2,2.5,5,10].map(k=>k*e).find(v=>v>=mx)})();
+ const y=v=>t+(H-t-b)*(1-v/nice),gw=(W-l-8)/n;let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Monthly imports and exports">`;
+ for(let i=0;i<=4;i++){const v=nice*i/4;s+=`<line x1="${l}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${l-6}" y="${y(v)+4}" text-anchor="end">${f1(v)}</text>`}
+ M.forEach((m,i)=>{const x0=l+i*gw+gw*.12,bw=gw*.36;
+  [['import','--imp',0],['export','--exp',1]].forEach(([k,c,j])=>{const v=p[k][i],h=y(0)-y(v);
+   s+=`<rect x="${x0+j*(bw+2)}" y="${y(v)}" width="${bw}" height="${Math.max(h,0)}" rx="3" fill="var(${c})" data-tip="${m} ${k}: ${f1(v)}"/><text class="v" x="${x0+j*(bw+2)+bw/2}" y="${y(v)-4}" text-anchor="middle">${f1(v)}</text>`});
+  s+=`<text x="${l+i*gw+gw/2}" y="${H-8}" text-anchor="middle">${m}</text>`});
+ return s+'</svg>'}
+function rankRows(entries,color){const mx=Math.max(...entries.map(e=>e[1]),1);
+ return entries.map(([n,v])=>`<div class="row" data-tip="${n}: ${f1(v)}"><span class="l">${n}</span><div class="t"><div class="f" style="width:${Math.max(v,0)/mx*100}%;background:var(${color})"></div></div><span class="v">${f1(v)}</span></div>`).join('')}
+function countryPanel(p){const fl=st.cflow,src=p[fl+'_countries'];
+ const ctl=`<div class="bar">${seg('cf',[['import','Import'],['export','Export']],fl)}${seg('cp',[...M.map((m,i)=>[i,m]),[5,'Apr–Aug']],st.cper)}</div>`;
+ if(!src)return `<div class="panel"><h2>Country wise</h2><p class="note">JPC does not publish a country split for this item.</p></div>`;
+ const per=st.cper;let ent=Object.entries(src).map(([n,a])=>[n,per===5?sum(a):a[per]]).filter(e=>e[1]>0.05);
+ const oth=ent.filter(e=>e[0]==='Others');ent=ent.filter(e=>e[0]!=='Others').sort((a,b)=>b[1]-a[1]);
+ const top=ent.slice(0,12),rest=sum(ent.slice(12).map(e=>e[1]))+sum(oth.map(e=>e[1]));if(rest>0.05)top.push(['Others',rest]);
+ const total=sum(ent.map(e=>e[1]))+sum(oth.map(e=>e[1]));
+ return `<div class="panel"><h2>${fl==='import'?'Imports from':'Exports to'} – country wise</h2><p class="note">Total ${f1(total)}${p.country_note?' · '+p.country_note:''}</p>${ctl}
+ ${top.length?rankRows(top,fl==='import'?'--imp':'--exp'):'<p class="note">No trade recorded for this period.</p>'}</div>`}
+const PK={"HR Plate":["HR Plate (plate mill)","HR Plate (HSM)"],"GP/GC (incl. BGL)":["GP/GC (incl. BGL)","Galvalume (BGL)"],"TMT / Bars & Rods":["TMT / Bars & Rods","Rebars (TMT)","Wire Rods","Plain Rounds"]};
+function prodPanel(p){const keys=(PK[p.name]||[p.name]).filter(k=>D.production[k]);
+ if(!keys.length)return `<div class="panel"><h2>Producer wise</h2><p class="note">JPC does not publish a producer split for this item.</p></div>`;
+ const per=st.pper,lab=[['cum','Apr–Aug'],['June 2026','Jun'],['July 2026','Jul'],['August 2026','Aug']];
+ let h=`<div class="panel"><h2>Producer wise (plant wise)</h2><p class="note">Production, '000 t. SAIL, RINL, NSL, TSL, AM/NS, JSL, JSW and others.</p><div class="bar">${seg('pp',lab,per)}</div>`;
+ keys.forEach(k=>{const S=D.production[k];let ent=[];
+  if(per==='cum'){const r=S['August 2026'];if(r)ent=D.producers.map(q=>[q,r.cum[q]])}
+  else{const r=S[per];if(r)ent=D.producers.map(q=>[q,r.mon[q]])}
+  ent=ent.filter(e=>e[1]!=null).sort((a,b)=>b[1]-a[1]);const tot=sum(ent.map(e=>e[1]));
+  h+=`<h3 class="sec">${k}${ent.length?' · total '+f1(tot):''}</h3>`+(ent.length?rankRows(ent,'--imp'):'<p class="note">Not published for this period.</p>')});
+ return h+'</div>'}
+function detail(p){const I=sum(p.import),E=sum(p.export),net=E-I;
+ return `<h2 style="font:600 22px var(--fc);margin:0 0 10px">${p.name}</h2>
+ <div class="kpis"><div class="kpi"><span><i style="background:var(--imp)"></i>Imports Apr–Aug</span><b>${f1(I)}</b></div><div class="kpi"><span><i style="background:var(--exp)"></i>Exports Apr–Aug</span><b>${f1(E)}</b></div><div class="kpi"><span>Net (export − import)</span><b class="${net>=0?'up':'dn'}">${net>=0?'+':''}${f1(net)}</b></div><div class="kpi"><span>Aug export / import</span><b>${f1(p.export[4])} / ${f1(p.import[4])}</b></div></div>
+ <div class="panel"><h2>Month-wise import vs export</h2><div class="leg"><span><i style="background:var(--imp)"></i>Import</span><span><i style="background:var(--exp)"></i>Export</span></div>${colChart(p)}</div>
+ <div class="two" style="margin-top:16px">${countryPanel(p)}${prodPanel(p)}</div>`}
+/*__FLOW__*/
+function render(){nav();$('#main').innerHTML=st.sel==='flow'?flowView():st.sel===null?overview():detail(P[st.sel]);
+ if(st.sel==='flow'){wire('fpa',k=>st.fper=k);wire('fpb',k=>st.fper=k);$('#fe').onchange=e=>{st.fent=e.target.value;render()}}
+ else if(st.sel===null){wire('ovs',k=>st.ov=k);document.querySelectorAll('#main [data-p]').forEach(e=>e.onclick=()=>go(+e.dataset.p))}
+ else{wire('cf',k=>st.cflow=k);wire('cp',k=>st.cper=+k);wire('pp',k=>st.pper=k)}}
+render();
+</script>
+
+</body>
+</html>
