@@ -239,7 +239,7 @@ function flowView(){
   <div class="leg">${lg}</div><div class="scroll">${wfSvg(SF,'Waterfall of flat steel from crude steel to colour coated')}</div>${wfTable(SF)}</div>
  <div class="panel"><h2>Long products waterfall</h2><p class="note">Crude steel down to rebars. Angles and structurals, rails, wire rods and the rest are grouped as long products.</p>
   <div class="leg">${lg}</div><div class="scroll">${wfSvg(SL,'Waterfall of long steel from crude steel to rebars')}</div>${wfTable(SL)}</div>
- <div class="panel"><h2>How to read this</h2><ul class="notes">
+ <div class="panel"><details style="margin:0"><summary style="font:600 16px var(--fc);color:var(--ink)">How to read this</summary><ul class="notes" style="margin-top:10px">
   <li><b>All India:</b> “HR / CR / GP-GC fed to downstream” are JPC’s own <i>consumed for downstream</i> figures (Chapter 5). For a single producer JPC publishes no such number, so it is estimated as the output of the next stage taken 1:1 (no yield loss).</li>
   <li><b>“&gt;100%”</b> in a box above means the producer processes more than it makes at the stage before, so it buys coil.</li>
   <li><b>Balancing bars</b> (red or green) make each stage tie to the reported production. Red is yield loss, stock build or unaccounted material. Green is material that came from outside the chain, such as imports, bought-in coil or stock draw. A producer with more downstream output than HR coil (for example JSL and “The remaining producers”) shows a large green bar: it buys coil.</li>
@@ -247,7 +247,7 @@ function flowView(){
   <li><b>Imports and exports</b> (All India only) come from the JPC Trade Reports for HR coil, CR, GP/GC/BGL and colour coated. The “sold domestically / stock” bar is what is left after production, trade and the downstream feed. JPC publishes no producer-wise trade, so the producer view has no import/export bars. Trade in long products is on the product pages, not in the waterfall.</li>
   <li><b>Colour coated:</b> JPC’s GP/GC-consumed-for-downstream equals colour-coated output exactly, so that step has no loss.</li>
   <li><b>Alloy and stainless flat</b> come out before HR coil because JPC’s HR coil line is non-alloy only; their own downstream is not tracked here.</li>
-  <li><b>Periods:</b> April-only and May-only figures are not available because JPC prints the April category tables as images. Single months are the difference between consecutive April-to-date reports, so JPC’s later revisions are already included.</li></ul></div>`}
+  <li><b>Periods:</b> April-only and May-only figures are not available because JPC prints the April category tables as images. Single months are the difference between consecutive April-to-date reports, so JPC’s later revisions are already included.</li></ul></details></div>`}
 
 function render(){nav();$('#main').innerHTML=st.sel==='flow'?flowView():st.sel===null?overview():detail(P[st.sel]);
  if(st.sel==='flow'){wire('fpa',k=>st.fper=k);wire('fpb',k=>st.fper=k);$('#fe').onchange=e=>{st.fent=e.target.value;render()}}
