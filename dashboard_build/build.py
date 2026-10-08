@@ -133,7 +133,7 @@ print({rm:(v['cum']['All India'],v['mon']['All India']) for rm,v in out["product
 print({rm:(v['cum']['All India'],v['mon']['All India']) for rm,v in out["production"]["Billets / Semis"].items()})
 print({rm:(v['cum']['All India'],v['mon']['All India']) for rm,v in out["production"]["HRC"].items()})
 
-out['flow']=fb.build_flow(x)
+out['flow']=fb.build_flow(x,out['products'])
 json.dump(out,open('data.json','w'))
 print('flow added',len(json.dumps(out['flow'])))
 print('Rebars All India cum Aug',out['production']['Rebars (TMT)']['August 2026']['cum']['All India'])

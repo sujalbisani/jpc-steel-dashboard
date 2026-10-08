@@ -57,7 +57,7 @@ def bars_nonalloy(b):
     return out
 
 
-def build_flow(x):
+def build_flow(x, products=()):
     pc = x["Prod_by_Category"]; pc = pc[~pc.prior_year_table]
     dn = x["Downstream_by_Producer"]; dn = dn[~dn.prior_year_table]
     sm = x["Summary_Production"]
@@ -99,7 +99,14 @@ def build_flow(x):
         for k in pcum:
             a = pcum[k].get(RMS[i]); p = pcum[k].get(RMS[i - 1]) if kind == "mon" else 0
             pub[pk][k] = None if a is None or p is None else a - p
-    return {"periods": [[k, l, kind] for k, l, kind, _ in PERIODS], "entities": ENT, "v": v, "pub": pub}
+    # All-India import / export of the four flat stages, from the Trade Reports (monthly Apr..Aug, '000 t); same figures as JPC's consumption table
+    names = {"hr": "HRC", "cr": "CR Coil", "gp": "GP/GC (incl. BGL)", "cc": "PPGL/PPGI"}
+    idx = {"c8": range(0, 5), "c7": range(0, 4), "c6": range(0, 3), "c5": range(0, 2), "m8": [4], "m7": [3], "m6": [2]}
+    pm = {p["name"]: p for p in products}
+    trade = {}
+    for pk, r in idx.items():
+        trade[pk] = {f"{k}_{f[0]}": round(sum(pm[n][f][i] for i in r), 1) for k, n in names.items() if n in pm for f in ("import", "export")}
+    return {"periods": [[k, l, kind] for k, l, kind, _ in PERIODS], "entities": ENT, "v": v, "pub": pub, "trade": trade}
 
 
 if __name__ == "__main__":
