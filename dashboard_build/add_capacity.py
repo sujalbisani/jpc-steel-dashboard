@@ -23,18 +23,26 @@ function capView(){const p=st.fper,k=AF[p],A=F.v['All India'][p],g=x=>A[x]||0,an
  const tbl=`<div class="scroll"><table><thead><tr><th>Producer</th><th>HR coil Apr–Aug (Mt)</th><th>Annualised (Mt)</th><th>Capacity FY26</th><th>Capacity FY27P</th><th>Util. vs FY26</th><th>Util. vs FY27P</th></tr></thead><tbody>`
   +rows.map(r=>{const raw=(F.v[r.e][p].hr||0)/1000;return `<tr><td>${DECK.name[r.e]}</td><td>${raw.toFixed(2)}</td><td>${r.v.toFixed(1)}</td><td>${r.c26.toFixed(1)}</td><td>${r.c27.toFixed(1)}</td><td>${pcI(r.v,r.c26)}</td><td>${pcI(r.v,r.c27)}</td></tr>`}).join('')
   +`<tr class="grp"><td>All India</td><td>${(g('hr')/1000).toFixed(2)}</td><td>${an(g('hr')).toFixed(1)}</td><td>${DECK.tot[0]}</td><td>${DECK.tot[1]}</td><td>${pcI(an(g('hr')),DECK.tot[0])}</td><td>${pcI(an(g('hr')),DECK.tot[1])}</td></tr></tbody></table></div>`;
- const hf=F.pub[p]&&F.pub[p].hrfeed!=null?F.pub[p].hrfeed:0;
- const chk=[['HR coil production',`${an(g('hr')).toFixed(1)} Mt`,`Deck FY26E ${DECK.prod[0]} · FY27P ${DECK.prod[1]} Mt`,`Within ${Math.abs(Math.round((an(g('hr'))/DECK.prod[0]-1)*100))}% of the deck's FY26E. The deck's FY27P assumes growth from here.`],
-  ['Plate production',`${an(g('pm')).toFixed(1)} Mt`,`Deck FY26E ${DECK.plate[0]} · FY27P ${DECK.plate[1]} Mt`,'Plate-mill plates match the deck closely.'],
-  ['CR coil output (≈ captive HR)',`${an(g('cr')).toFixed(1)} Mt`,`Deck "captive" FY26E ${DECK.captive[0]} · FY27P ${DECK.captive[1]} Mt`,'The deck’s captive HR is almost exactly India’s CR output. So "captive" means HR turned into CR by the same company.'],
-  ['JPC "HR fed to downstream"',hf?`${an(hf).toFixed(1)} Mt`:'–','Not the same thing as the deck’s captive',`Larger because JPC also counts HR going into pipes (${an(g('pipes')).toFixed(1)} Mt), HR sheets and HSM plates.`]];
+
+ const CC={rows:[['JSW Group','JSW (incl. BPSL)',[6.10,1.15,0.90,1.48]],['TSL Group','Tata Steel / BSL',[4.24,0.98,0.58,1.02]],['SAIL','SAIL',[3.03,0.70,0,0]],['AM/NS (ESSAR)','AM/NS (incl. Uttam Khopoli, ISC)',[3.30,2.36,0.70,0]]],tot:[22.93,10.25,3.42,2.79],uc:{'JSW Group':[2.0,0,0,0],'TSL Group':[1.5,0,0,0]}};
+ const u=st.capu==='uc',ad=e=>u&&CC.uc[e]?CC.uc[e]:[0,0,0,0];
+ const jo=(e,i)=>{const v=F.v[e][p];return an([v.cr,v.gpgc,v.cc][i]||0)};
+ const cpr=CC.rows.map(([e,n,c])=>{const cap=c.map((x,i)=>x+ad(e)[i]);return {n,cap,o:[jo(e,0),jo(e,1)||0,jo(e,2)]}});
+ const ct=CC.tot.map((x,i)=>x+(u?Object.values(CC.uc).reduce((s,a)=>s+a[i],0):0)),on=['cr','gpgc','cc'].map(k=>an(g(k)));
+ const nm=cpr.reduce((s,r)=>s.map((x,i)=>x+r.cap[i]),[0,0,0,0]),no=cpr.reduce((s,r)=>s.map((x,i)=>x+r.o[i]),[0,0,0]);
+ const ot=[on[0]-no[0],on[1]-no[1],on[2]-no[2]],oc=[ct[0]-nm[0],ct[1]-nm[1],ct[2]-nm[2],ct[3]-nm[3]];
+ const cu=(o,c)=>c>0?`<td>${pcI(o,c)}</td>`:`<td>–</td>`,cell=(r,c,o)=>`<td>${c.toFixed(2)}</td><td>${o.toFixed(1)}</td>${cu(o,c)}`;
+ const rr=[...cpr.map(r=>[r.n,r.cap,r.o]),['All other producers',oc,ot]],ctab=`<div class="scroll"><table><thead><tr><th rowspan="2">Producer</th><th colspan="3">Cold rolled (CR)</th><th colspan="3">Galvanised / galvalume (GP/GC)</th><th colspan="3">Colour coated</th></tr><tr><th>Capacity</th><th>Output</th><th>Util.</th><th>Capacity</th><th>Output</th><th>Util.</th><th>Capacity</th><th>Output</th><th>Util.</th></tr></thead><tbody>`
+  +rr.map(([n,c,o])=>`<tr><td>${n}</td>${cell(n,c[0],o[0])}${cell(n,c[1]+c[3],o[1])}${cell(n,c[2],o[2])}</tr>`).join('')
+  +`<tr class="grp"><td>All India</td>${cell('',ct[0],on[0])}${cell('',ct[1]+ct[3],on[1])}${cell('',ct[2],on[2])}</tr></tbody></table></div>`;
+ const cpanel=`<div class="panel"><h2>Cold-rolled and coated lines</h2><p class="note">Line capacity from the mills' capacity chart (Mt a year, <b>2021 data</b>) against JPC output annualised from ${PERL[p]}. Over 100% means the mill has added capacity since 2021 or buys in coil. Galvanised / galvalume capacity is the HDG, GL and GA lines together; colour coated is the PPGI column.</p>
+  <div class="bar">${seg('capu',[['2021','2021 chart'],['uc','Add units then under commissioning']],st.capu||'2021')}</div>${ctab}
+  <p class="note" style="margin-top:10px">Units then under commissioning, added in the second view: JSW Vasind and Tarapur (2.0 Mt CR) and Tata Kalinganagar (1.5 Mt CR). AM/NS includes Hazira and Pune plus two plants it has bought since: Uttam Galva’s Khopoli (0.72 CR, 0.60 galvanised, 0.18 colour coated) and Indian Steel Corporation, Gandhidham (0.54, 0.36, 0.12). Uttam’s Wardha plant stays under other producers. Other changes since 2021 are not in the chart. Photo figures are read by eye and a few were hard to read, so check before quoting them.</p></div>`;
  return `<h2 style="font:600 22px var(--fc);margin:0 0 4px">Capacity &amp; utilisation</h2>
  <p class="note" style="margin-bottom:10px">HR coil production by producer (JPC actuals, annualised) against mill capacity from the HR Strategy deck. Capacity and the comparison figures are JSW estimates from its HR Strategy deck (ABP FY27), not JPC data. ${PERL[p]}${F.periods.find(q=>q[0]===p)[2]==='cum'?' (April to date)':' (single month)'} × ${k.toFixed(2)}.</p>
  <div class="bar ctl"><label class="lab">Period</label>${per('fpa',['c8','c7','c6','c5'])}${per('fpb',['m8','m7','m6'])}</div>
  <div class="panel"><h2>Utilisation by producer (against FY27P capacity)</h2><p class="note">Grey is capacity, blue is annualised HR coil output. Figures are Mt per year.</p>${rows.map(bar).join('')}
-  <p class="note" style="margin-top:10px"><b>Reading it:</b> AM/NS is measured against 10.1 Mt, which includes the new Hazira capacity still ramping up. Against 7.1 Mt (FY26) it runs near full. JSPL is low because JPC reports most of its Angul output as plate, not HR coil. "Others" is above 100% because the deck’s 6.0 Mt looks too small for all remaining mills.</p>${tbl}</div>
- <div class="panel"><h2>Does the deck agree with JPC?</h2><div class="kpis">${chk.map(c=>`<div class="kpi"><span>${c[0]}</span><b>${c[1]}</b><span>${c[2]}</span><span style="margin-top:6px;color:var(--ink)">${c[3]}</span></div>`).join('')}</div>
-  <p class="note" style="margin-top:10px">All India HR coil is ${pcI(an(g('hr')),DECK.tot[1])} of FY27P capacity, against ${DECK.util[1]}% in the deck. JPC counts non-alloy HR coil only, and April–August includes the monsoon dip, so the full year may come out higher.</p></div>`}
+  <p class="note" style="margin-top:10px"><b>Reading it:</b> AM/NS is measured against 10.1 Mt, which includes the new Hazira capacity still ramping up. Against 7.1 Mt (FY26) it runs near full. JSPL is low because JPC reports most of its Angul output as plate, not HR coil. "Others" is above 100% because the deck’s 6.0 Mt looks too small for all remaining mills.</p>${tbl}</div>${cpanel}`}
 '''
 CSS = '''.cr{display:grid;grid-template-columns:150px minmax(0,1fr) 92px 44px;gap:10px;align-items:center;padding:5px 0}.cr .l{font-size:13px}.cr .v{font-size:12px;color:var(--ink2);text-align:right}.cr b{font:600 13px var(--fc);text-align:right}.cr b.bad{color:var(--bad)}
 .ct{position:relative;height:14px}.cc{position:absolute;inset:0 auto 0 0;background:var(--grid);border-radius:3px}.cf{position:absolute;inset:3px auto 3px 0;background:var(--imp);border-radius:2px}
@@ -47,7 +55,7 @@ rep("""<button data-p="" aria-current="${cur(null)}">Import / export overview</b
 rep("b.dataset.p==='flow'?'flow':+b.dataset.p", "isNaN(+b.dataset.p)?b.dataset.p:+b.dataset.p")
 rep("$('#crumb').textContent=st.sel==='flow'?'Steel flow':", "$('#crumb').textContent=st.sel==='cap'?'Capacity & utilisation':st.sel==='flow'?'Steel flow':")
 rep("$('#main').innerHTML=st.sel==='flow'?flowView():", "$('#main').innerHTML=st.sel==='cap'?capView():st.sel==='flow'?flowView():")
-rep(" if(st.sel==='flow'){wire('fpa'", " if(st.sel==='cap'){wire('fpa',k=>st.fper=k);wire('fpb',k=>st.fper=k)}else if(st.sel==='flow'){wire('fpa'")
+rep(" if(st.sel==='flow'){wire('fpa'", " if(st.sel==='cap'){wire('fpa',k=>st.fper=k);wire('fpb',k=>st.fper=k);wire('capu',k=>st.capu=k)}else if(st.sel==='flow'){wire('fpa'")
 rep("</style>", CSS)
 out = os.path.join(here, "..", "jpc_dashboard.html")
 open(out, "w", encoding="utf-8").write(h)
