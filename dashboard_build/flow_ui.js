@@ -56,6 +56,8 @@ function steps(route){
   lvl('Rebars (TMT)',g('rebar'),'tot',['Unallocated','Unallocated']);
  }
  return S}
+const GO=[[/^Crude steel$/,10],[/HR sheets/,1],[/HSM plates|Plate-mill/,2],[/Large-dia pipes/,11],[/Electrical/,12],[/Tin plate/,13],[/HR coil|HR fed|Bought-in HR/,0],[/Colour coated|PPGI|PPGL/,5],[/GP|galvalume|BGL|Fed to colour/i,4],[/^CR |CR fed|Imports of CR|Exports of CR|Bought-in CR|CR coil/,3],[/Structurals|structurals/,7],[/Railway/,8],[/Alloy long|Stainless long/,14],[/Bars|Wire rods|Plain rounds|Other bars|Rebars/,6]];
+const goOf=r=>{if(r.bal||r.part&&0)return null;const m=GO.find(q=>q[0].test(r.label));return m?m[1]:null};
 function wfSvg(S,aria){
  const W=980,L=305,R=64,rh=27,top=8,n=S.length,H=top+n*rh+26,crude=S[0].v;
  const mx=Math.max(...S.map(s=>Math.max(s.a,s.b)),1),mn=Math.min(0,...S.map(s=>Math.min(s.a,s.b)));
@@ -67,10 +69,11 @@ function wfSvg(S,aria){
   const tip=isT?`${r.label}: ${f2(r.v)} Mt · ${pc(r.v,crude)} of crude steel`:`${r.label}: ${sg(r.v)} Mt · ${pc(Math.abs(r.v),Math.abs(r.a))} of the level before · ${pc(Math.abs(r.v),crude)} of crude steel`;
   let j=i-1;while(j>=0&&S[j].part)j--;
   if(j>=0&&!r.part){const pv=S[j];s+=`<line x1="${x(pv.b)}" x2="${x(pv.b)}" y1="${top+j*rh+4+h}" y2="${y}" stroke="var(--ink3)" stroke-dasharray="2 2"/>`}
-  s+=`<g data-tip="${tip}"><rect class="hov" x="0" y="${y-4}" width="${W}" height="${rh}" rx="4" fill="transparent"/>`
+  const gt=goOf(r),nm=gt==null?'':P[gt].name;
+  s+=`<g data-tip="${tip}${gt==null?'':' · click for '+nm+' detail'}"${gt==null?'':` data-go="${gt}" tabindex="0" role="link" aria-label="${r.label}: open ${nm}"`}><rect class="hov" x="0" y="${y-4}" width="${W}" height="${rh}" rx="4" fill="transparent"/>`
    +`<text x="${L-8}" y="${y+h/2+4}" text-anchor="end" ${isT?'class="v"':''}>${isT||r.part?'':'↳ '}${r.label}</text>`
    +`<rect x="${x1}" y="${y}" width="${w}" height="${h}" rx="3" fill="var(${COL[r.cls]})" ${r.bal?'fill-opacity=".75"':r.part?'fill-opacity=".45"':''}/>`
-   +`<text class="v" x="${x(Math.max(r.a,r.b))+6}" y="${y+h/2+4}">${isT?f2(r.v):sg(r.v)}</text></g>`});
+   +`<text class="v" x="${x(Math.max(r.a,r.b))+6}" y="${y+h/2+4}">${isT?f2(r.v):sg(r.v)}</text>${gt==null?'':`<text class="lk" x="${W-14}" y="${y+h/2+4}" text-anchor="end">›</text>`}</g>`});
  return s+'</svg>'}
 function wfTable(S){const crude=S[0].v;
  return `<details><summary>Show as table</summary><div class="scroll"><table><thead><tr><th>Step</th><th>Type</th><th>Mt</th><th>'000 t</th><th>% of crude</th></tr></thead><tbody>`
@@ -90,7 +93,7 @@ function flowView(){
  <p class="note" style="margin-bottom:10px">Where the steel goes, stage by stage, in million tonnes. ${e} · ${PERL[p]}${F.periods.find(q=>q[0]===p)[2]==='cum'?' (April to date)':' (single month)'}</p>
  <div class="bar ctl"><label class="lab">Period</label>${per('fpa',['c8','c7','c6','c5'])}${per('fpb',['m8','m7','m6'])}<label class="lab" style="margin-left:8px" for="fe">Producer</label><select id="fe">${opts}</select></div>
  <div class="kpis">${kp.map(k=>`<div class="kpi"><span>${k[0]}</span><b>${k[1]}</b><div class="meter"><i style="width:${k[3]}%"></i></div><span>${k[2]}</span></div>`).join('')}</div>
- <div class="panel"><h2>Flat products waterfall</h2><p class="note">Crude steel down to HR coil, then each downstream stage. Blue bars are what each stage produced, teal is what moved on to the next stage, the rest are exits.</p>
+ <div class="panel"><h2>Flat products waterfall</h2><p class="note">Crude steel down to HR coil, then each downstream stage. Blue bars are what each stage produced, teal is what moved on to the next stage, the rest are exits. Click any row marked › to open that product with its country and producer detail.</p>
   <div class="leg">${lgf(SF)}</div><div class="scroll">${wfSvg(SF,'Waterfall of flat steel from crude steel to colour coated')}</div>${wfTable(SF)}</div>
  <div class="panel"><h2>Long products waterfall</h2><p class="note">Crude steel down to rebars. Angles and structurals, rails, wire rods and the rest are grouped as long products.</p>
   <div class="leg">${lgf(SL)}</div><div class="scroll">${wfSvg(SL,'Waterfall of long steel from crude steel to rebars')}</div>${wfTable(SL)}</div>

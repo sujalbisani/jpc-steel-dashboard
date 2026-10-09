@@ -84,6 +84,8 @@ details{margin-top:8px}summary{cursor:pointer;color:var(--ink2);font-size:12.5px
 svg g:hover>.hov{fill:var(--sel)}
 .mini{margin:6px 2px 0}.mini summary{cursor:pointer;color:var(--ink3);font-size:12px;width:max-content}
 .mini .notes{font-size:11.5px;color:var(--ink3);margin-top:8px;max-width:900px}
+.back{margin:0 0 10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;padding:6px 12px;border-radius:8px;cursor:pointer}.back:hover{background:var(--sel)}
+g[data-go]{cursor:pointer}g[data-go]:focus-visible{outline:2px solid var(--imp)}g[data-go] .lk{fill:var(--ink3)}g[data-go]:hover .lk{fill:var(--imp)}
 </style>
 </head>
 <body>
@@ -99,7 +101,7 @@ svg g:hover>.hov{fill:var(--sel)}
 const D=__DATA__;
 const M=D.months,P=D.products,$=s=>document.querySelector(s);
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-const st={open:false,pin:LS.get('jpc.pin')==='1'&&innerWidth>=900,sel:'flow',fper:'c8',fent:'All India',ov:'import',cflow:'import',cper:5,pper:'cum'};
+const st={from:null,open:false,pin:LS.get('jpc.pin')==='1'&&innerWidth>=900,sel:'flow',fper:'c8',fent:'All India',ov:'import',cflow:'import',cper:5,pper:'cum'};
 const f1=n=>n==null?'–':n.toLocaleString('en-IN',{maximumFractionDigits:1,minimumFractionDigits:Math.abs(n)<10&&n!==0?1:0});
 const sum=a=>a.reduce((x,y)=>x+y,0);
 const tip=$('#tip');
@@ -113,7 +115,8 @@ function nav(){const cur=k=>st.sel===k;
  $('#nav').innerHTML=h;
  $('#nav').querySelectorAll('button[data-p]').forEach(b=>b.onclick=()=>{go(b.dataset.p===''?null:b.dataset.p==='flow'?'flow':+b.dataset.p);if(!st.pin){st.open=false;chrome()}});
  $('#pin').onclick=()=>{st.pin=!st.pin;LS.set('jpc.pin',st.pin?'1':'0');st.open=false;chrome();nav()}}
-function go(i){st.sel=i;st.cper=5;render();scrollTo(0,0)}
+function go(i){st.sel=i;st.cper=5;st.from=null;render();scrollTo(0,0)}
+function drill(i){const q=st.fper;st.sel=i;st.from='flow';st.cper={m8:4,m7:3,m6:2}[q]??5;st.pper={m8:'August 2026',m7:'July 2026',m6:'June 2026'}[q]||'cum';render();scrollTo(0,0)}
 function seg(id,opts,cur){return `<div class="seg" id="${id}">`+opts.map(([k,l])=>`<button data-k="${k}" aria-pressed="${String(cur)===String(k)}">${l}</button>`).join('')+'</div>'}
 function wire(id,fn){document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{fn(b.dataset.k);render()})}
 function overview(){
@@ -176,7 +179,9 @@ theme();
 function render(){chrome();nav();$('#crumb').textContent=st.sel==='flow'?'Steel flow':st.sel===null?'Import / export overview':P[st.sel].name;$('#main').innerHTML=st.sel==='flow'?flowView():st.sel===null?overview():detail(P[st.sel]);
  if(st.sel==='flow'){wire('fpa',k=>st.fper=k);wire('fpb',k=>st.fper=k);$('#fe').onchange=e=>{st.fent=e.target.value;render()}}
  else if(st.sel===null){wire('ovs',k=>st.ov=k);document.querySelectorAll('#main [data-p]').forEach(e=>e.onclick=()=>go(+e.dataset.p))}
- else{wire('cf',k=>st.cflow=k);wire('cp',k=>st.cper=+k);wire('pp',k=>st.pper=k)}}
+ else{wire('cf',k=>st.cflow=k);wire('cp',k=>st.cper=+k);wire('pp',k=>st.pper=k);
+  if(st.from==='flow'){$('#main').insertAdjacentHTML('afterbegin','<button class="back" id="back">← Back to Steel flow</button>');$('#back').onclick=()=>{st.sel='flow';st.from=null;render();scrollTo(0,0)}}}
+ if(st.sel==='flow')document.querySelectorAll('#main [data-go]').forEach(g=>{const f=()=>drill(+g.dataset.go);g.onclick=f;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}}})}
 render();
 </script>
 
