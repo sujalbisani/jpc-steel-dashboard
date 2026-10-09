@@ -7,3 +7,6 @@ subprocess.run([sys.executable, "build.py"], check=True)
 t = open("template_do_not_open.txt", encoding="utf-8").read().replace("/*__FLOW__*/", open("flow_ui.js", encoding="utf-8").read()).replace("__DATA__", open("data.json").read())
 open("../jpc_dashboard.html", "w", encoding="utf-8").write(t)
 print("jpc_dashboard.html updated")
+
+import subprocess,sys
+subprocess.run([sys.executable,"add_capacity.py"],check=True)
